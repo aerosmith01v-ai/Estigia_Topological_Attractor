@@ -1,0 +1,6 @@
+# Ignore outputs and python caches
+outputs/
+__pycache__/
+*.pyc
+.venv/
+.env
