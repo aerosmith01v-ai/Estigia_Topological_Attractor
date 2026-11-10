@@ -1,8 +1,13 @@
-# Estigia · Analizador de mediciones
+# Estigia · Analizador paralelo de patrones
 
-Esta versión sustituye la animación sintética de Lorenz como herramienta principal por un analizador local de **mediciones que proporciona el usuario**. Ya no genera la serie analizada a partir de una simulación.
+La herramienta recibe texto pegado o archivos TXT, CSV y JSON (límite 2 MB), extrae una serie numérica y muestra la forma de los datos. El análisis corre en dos rutas sobre la misma entrada:
 
-## Ejecutar
+1. **Ruta lineal:** respeta el orden recibido y calcula estadísticas, tendencia/ajuste lineal, RMSE, extrapolación descriptiva, FFT discreta y autocorrelación.
+2. **Ruta contraparte:** vuelve a procesar la serie en orden inverso y presenta las mismas medidas para comparar la dirección temporal. No es una inversión causal, una contraparte física ni una probabilidad.
+
+También ofrece comparación entrada/salida, distancia y tiempo estimado a un umbral, resumen léxico básico del texto y el módulo SOFI opcional con las fórmulas numéricas aportadas.
+
+## Ejecutar localmente
 
 ```bash
 python -m venv .venv
@@ -13,49 +18,22 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Abre http://127.0.0.1:5000. El servidor escucha solo en la computadora local. No introduzcas datos sensibles en un servidor público.
+Abre http://127.0.0.1:5000. El servicio escucha en localhost. No expongas mediciones o datos biométricos sensibles a una red pública.
 
-También se puede iniciar con `python simulation.py` o `python "Código.mat.py"`; ambos nombres antiguos ahora abren la nueva aplicación, no vuelven a ejecutar la simulación anterior.
+## Formatos
 
-## Qué analiza
+- Texto pegado con una secuencia numérica, como `1.2, 1.4, 1.9, 2.1`.
+- Archivos `.txt`, `.csv` y `.json` arrastrados al área de carga.
+- JSON con una lista o con una clave `serie`, `values` o `data`.
+- Se extraen hasta 100 000 valores y se aceptan archivos/textos de hasta 2 MB.
 
-- Serie temporal numérica observada: cantidad, mínimo, máximo, media, desviación estándar y tendencia lineal por muestra.
-- Error RMSE del ajuste lineal y extrapolación descriptiva para un horizonte configurable.
-- Distancia actual a un umbral y cruce estimado si la tendencia lineal lo alcanza.
-- Comparación opcional entrada/salida: brecha con signo, brecha absoluta, brecha relativa cuando la entrada no es cero y diferencia inversa.
-- Panel SOFI opcional con las fórmulas numéricas suministradas: banda, regla de frecuencia inversa, amplitud, energía, frecuencia cardíaca, período y la fórmula de coherencia SOFI.
-- Gráfico de la serie y control de decimales de presentación (0–15).
+El separador decimal esperado es punto (por ejemplo, `1.25`). En CSV, evita números con coma decimal para que la coma no se confunda con separador de columnas.
 
-El número de decimales solo controla el redondeo que se muestra; no aumenta la exactitud instrumental ni la precisión de los datos originales. La extrapolación lineal no es una probabilidad calibrada. El análisis SOFI preserva las fórmulas aritméticas, pero no interpreta sus salidas como estados inconscientes ni como diagnóstico médico: esas conclusiones no se desprenden matemáticamente de las fórmulas.
+## Interpretación y límites
 
-## API local
+La FFT y autocorrelación requieren datos muestreados regularmente; la frecuencia informada está en ciclos por muestra porque no se solicita una frecuencia de muestreo. El resumen textual solo cuenta palabras y repeticiones: no realiza interpretación semántica. Las fórmulas SOFI conservan su condición de heurísticas; no constituyen una FFT inversa o diagnóstico. Decimales controla redondeo de presentación, no precisión de medición. La extrapolación lineal no es una predicción validada ni una probabilidad de colapso/evento.
 
-`POST /api/analizar` acepta JSON. Ejemplo:
-
-```json
-{
-  "serie": [1.2, 1.4, 1.9, 2.1, 2.8, 3.0],
-  "unidad": "unidades",
-  "decimales": 8,
-  "horizonte": 3,
-  "umbral": 5,
-  "sentido_umbral": "arriba",
-  "entrada": 2.4,
-  "salida": 3.1,
-  "sofi": {
-    "frecuenciaActual": 12.3,
-    "ritmoCardiaco": 72,
-    "spo2": 97,
-    "irritabilidad": 30
-  }
-}
-```
-
-Los campos `entrada` y `salida` deben aparecer juntos. `sofi` es opcional. Para mediciones reales, introduce valores obtenidos por instrumentos/sistemas apropiados, junto con unidades y marcas de tiempo coherentes.
-
-## Sobre AUREC y predicciones
-
-La información compartida para AUREC era un enlace HTML temporal, no el código fuente legible del analizador; por tanto, no se inventan ni se atribuyen fórmulas de AUREC a esta herramienta. La app queda preparada para ampliarse cuando el código y sus definiciones de métricas estén disponibles. Actualmente no calcula probabilidades de colapso/eventos ni garantiza que algo sucederá. Para ello se necesitan eventos definidos, suficientes observaciones etiquetadas y evaluación retrospectiva/fuera de muestra.
+AUREC todavía no se integra porque no se dispone de su código fuente legible y de sus fórmulas en la conversación/repo; no se inventan sus análisis.
 
 ## Pruebas
 

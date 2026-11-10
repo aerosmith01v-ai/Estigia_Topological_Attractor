@@ -4,6 +4,7 @@ from flask import Flask, jsonify, render_template, request
 from analysis import analyze
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 
 
 @app.get("/")
@@ -22,9 +23,14 @@ def api_analyze():
         return jsonify({"error": str(exc)}), 400
 
 
+@app.errorhandler(413)
+def too_large(_error):
+    return jsonify({"error": "El archivo o texto supera el límite de 2 MB."}), 413
+
+
 def main():
-    print("Estigia — análisis de datos observados: http://127.0.0.1:5000")
-    print("Solo accesible desde este equipo por defecto; no publiques datos biométricos sensibles.")
+    print("Estigia — análisis paralelo de mediciones: http://127.0.0.1:5000")
+    print("Servidor local; no cargues datos sensibles en un servidor público.")
     app.run(host="127.0.0.1", port=5000, debug=False)
 
 
